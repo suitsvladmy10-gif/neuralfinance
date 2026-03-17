@@ -1,6 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoonStar, PiggyBank, ArrowRight, SplitSquareHorizontal } from 'lucide-react';
+import { MoonStar, PiggyBank, ArrowRight, SplitSquareHorizontal, X } from 'lucide-react';
 
 export function RolloverModal({ isOpen, onClose, surplus }: { isOpen: boolean; onClose: () => void; surplus: number }) {
   return (
@@ -11,13 +11,18 @@ export function RolloverModal({ isOpen, onClose, surplus }: { isOpen: boolean; o
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={onClose}
         >
           <motion.div 
             className="w-full max-w-sm bg-[#1A1C23] border border-[#2E323E] rounded-3xl p-6 shadow-2xl relative overflow-hidden"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
           >
+            <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-[#2E323E] rounded-full z-20">
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
             {/* Background Glow */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
 

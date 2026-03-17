@@ -5,6 +5,7 @@ import { MagicInputModal } from '@/components/MagicInputModal';
 import { RolloverModal } from '@/components/RolloverModal';
 import { EditTransactionModal } from '@/components/EditTransactionModal';
 import { IncomeRoutingModal } from '@/components/IncomeRoutingModal';
+import { SavingsRoutingModal } from '@/components/SavingsRoutingModal';
 import { Sparkles, Wallet, TrendingDown, ChevronRight, MoonStar, PlusCircle, Bell, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { useFinance } from '@/lib/store';
@@ -13,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
-  const { accounts, transactions, budget, reminders, addTransaction, updateAccountBalance } = useFinance();
+  const { accounts, transactions, budget, reminders, addTransaction, transferMoney } = useFinance();
   const router = useRouter();
   
   // Modals state
@@ -21,10 +22,12 @@ export default function Dashboard() {
   const [isRolloverOpen, setIsRolloverOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isIncomeRoutingOpen, setIsIncomeRoutingOpen] = useState(false);
+  const [isSavingsRoutingOpen, setIsSavingsRoutingOpen] = useState(false);
   
   // Data state
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [pendingIncome, setPendingIncome] = useState<{ amount: number, category: string, title?: string } | null>(null);
+  const [pendingSavings, setPendingSavings] = useState<{ amount: number, title?: string } | null>(null);
   
   const todayDate = new Date();
   const todayDay = todayDate.getDate();
@@ -50,26 +53,29 @@ export default function Dashboard() {
   const dailyBudget = budget.dailyLimit; 
   const remainingBudget = dailyBudget - totalExpensesToday;
 
-  const handleMagicAdd = (data: { amount: number, category: string, accountName: string, type: 'Expense' | 'Income' }) => {
+  const handleMagicAdd = (data: { amount: number, category: string, accountName: string, type: 'Expense' | 'Income', title?: string }) => {
+    const isSavings = ['копилка', 'цель', 'отложил', 'накопления'].some(k => 
+      data.category.toLowerCase().includes(k) || (data.title || '').toLowerCase().includes(k)
+    );
+
     if (data.type === 'Income') {
       setPendingIncome(data);
       setIsIncomeRoutingOpen(true);
       setIsMagicModalOpen(false);
+    } else if (isSavings) {
+      setPendingSavings({ amount: data.amount, title: data.title });
+      setIsSavingsRoutingOpen(true);
+      setIsMagicModalOpen(false);
     } else {
-      processAddTransaction(data);
+      addTransaction({
+        title: data.category,
+        category: data.category,
+        amount: data.amount,
+        type: data.type,
+        icon: '💸'
+      });
       setIsMagicModalOpen(false);
     }
-  };
-
-  const processAddTransaction = (data: { amount: number, category: string, accountName: string, type: 'Expense' | 'Income', accountId?: string }) => {
-    addTransaction({
-      title: data.category,
-      category: data.category,
-      amount: data.amount,
-      type: data.type,
-      icon: data.type === 'Income' ? '💰' : (data.category === 'Еда' ? '🍔' : '💸'),
-      accountId: data.accountId
-    });
   };
 
   const handleIncomeConfirm = (accountId: string, isTransfer: boolean) => {
@@ -84,6 +90,14 @@ export default function Dashboard() {
       });
       setIsIncomeRoutingOpen(false);
       setPendingIncome(null);
+    }
+  };
+
+  const handleSavingsConfirm = async (targetAccountId: string, fromAccountId: string) => {
+    if (pendingSavings) {
+      await transferMoney(fromAccountId, targetAccountId, pendingSavings.amount);
+      setIsSavingsRoutingOpen(false);
+      setPendingSavings(null);
     }
   };
 
@@ -206,6 +220,13 @@ export default function Dashboard() {
         incomeData={pendingIncome}
         onConfirm={handleIncomeConfirm}
         onAddNewAccount={() => router.push('/accounts')}
+      />
+      <SavingsRoutingModal
+        isOpen={isSavingsRoutingOpen}
+        onClose={() => { setIsSavingsRoutingOpen(false); setPendingSavings(null); }}
+        savingsData={pendingSavings}
+        onConfirm={handleSavingsConfirm}
+        onAddNewGoal={() => router.push('/accounts')}
       />
     </div>
   );

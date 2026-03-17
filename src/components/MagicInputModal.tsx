@@ -184,8 +184,20 @@ export function MagicInputModal({ isOpen, onClose, onAdd }: MagicInputModalProps
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm px-4 pb-20 pt-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <motion.div className="w-full max-w-md bg-[#1A1C23] border border-[#2E323E] rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}>
+        <motion.div 
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm px-4 pb-20 pt-4" 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.div 
+            className="w-full max-w-md bg-[#1A1C23] border border-[#2E323E] rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]" 
+            initial={{ y: "100%" }} 
+            animate={{ y: 0 }} 
+            exit={{ y: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             
             <div className="flex p-1 bg-[#2E323E] rounded-xl mb-6 flex-shrink-0">
               <button onClick={() => setType('Expense')} className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-all ${type === 'Expense' ? 'bg-[#1A1C23] text-white' : 'text-gray-500'}`}>
@@ -214,7 +226,7 @@ export function MagicInputModal({ isOpen, onClose, onAdd }: MagicInputModalProps
               <div className="relative">
                 <input
                   autoFocus type="text" value={input} onChange={handleInput}
-                  placeholder={isProcessing ? `Анализ: ${progress}%` : "1500 кофе, 800 такси..."}
+                  placeholder={isProcessing ? `Анализ: ${progress}%` : (type === 'Expense' ? "Пример: 1500 кофе сбер, 1000 еда Тиньков" : "Пример: 1000 премия сбер, 5000 долг Саня")}
                   disabled={isProcessing}
                   className="w-full bg-transparent text-xl text-white placeholder-gray-600 outline-none border-b border-[#2E323E] pb-2 focus:border-primary transition-colors disabled:opacity-50"
                 />

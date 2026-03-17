@@ -34,6 +34,7 @@ export function IncomeRoutingModal({ isOpen, onClose, incomeData, onConfirm, onA
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={onClose}
         >
           <motion.div 
             className="w-full max-w-md bg-[#1A1C23] border border-[#2E323E] rounded-t-[40px] p-8 shadow-2xl"
@@ -41,6 +42,7 @@ export function IncomeRoutingModal({ isOpen, onClose, incomeData, onConfirm, onA
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-8">
               <div>
