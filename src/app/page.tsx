@@ -3,26 +3,37 @@ import { useState, useMemo } from 'react';
 import { DailyLimitDial } from '@/components/DailyLimitDial';
 import { MagicInputModal } from '@/components/MagicInputModal';
 import { RolloverModal } from '@/components/RolloverModal';
+import { EditTransactionModal } from '@/components/EditTransactionModal';
+import { IncomeRoutingModal } from '@/components/IncomeRoutingModal';
 import { Sparkles, Wallet, TrendingDown, ChevronRight, MoonStar, PlusCircle, Bell, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { useFinance } from '@/lib/store';
+import { Transaction } from '@/types/finance';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
-  const { accounts, transactions, budget, reminders, confirmReminder, addTransaction, updateAccountBalance } = useFinance();
+  const { accounts, transactions, budget, reminders, addTransaction, updateAccountBalance } = useFinance();
+  const router = useRouter();
+  
+  // Modals state
   const [isMagicModalOpen, setIsMagicModalOpen] = useState(false);
   const [isRolloverOpen, setIsRolloverOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isIncomeRoutingOpen, setIsIncomeRoutingOpen] = useState(false);
+  
+  // Data state
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [pendingIncome, setPendingIncome] = useState<{ amount: number, category: string, title?: string } | null>(null);
   
   const todayDate = new Date();
   const todayDay = todayDate.getDate();
   const currentMonth = todayDate.toISOString().substring(0, 7);
 
-  // Reminders due today and not yet confirmed
   const dueToday = useMemo(() => 
     reminders.filter(r => r.dayOfMonth === todayDay && r.lastConfirmedDate !== currentMonth)
   , [reminders, todayDay, currentMonth]);
   
-  // Total Spending Power
   const spendingPower = useMemo(() => 
     accounts
       .filter(a => a.type === 'Debit' || a.type === 'Cash' || a.type === 'Credit')
@@ -39,24 +50,46 @@ export default function Dashboard() {
   const dailyBudget = budget.dailyLimit; 
   const remainingBudget = dailyBudget - totalExpensesToday;
 
-  const handleAddTransaction = (data: { amount: number, category: string, accountName: string, type: 'Expense' | 'Income' }) => {
+  const handleMagicAdd = (data: { amount: number, category: string, accountName: string, type: 'Expense' | 'Income' }) => {
+    if (data.type === 'Income') {
+      setPendingIncome(data);
+      setIsIncomeRoutingOpen(true);
+      setIsMagicModalOpen(false);
+    } else {
+      processAddTransaction(data);
+      setIsMagicModalOpen(false);
+    }
+  };
+
+  const processAddTransaction = (data: { amount: number, category: string, accountName: string, type: 'Expense' | 'Income', accountId?: string }) => {
     addTransaction({
       title: data.category,
       category: data.category,
       amount: data.amount,
       type: data.type,
-      icon: data.type === 'Income' ? '💰' : (data.category === 'Еда' ? '🍔' : '💸')
+      icon: data.type === 'Income' ? '💰' : (data.category === 'Еда' ? '🍔' : '💸'),
+      accountId: data.accountId
     });
-    
-    const targetAcc = accounts.find(a => a.name.toLowerCase().includes(data.accountName.toLowerCase()));
-    if (targetAcc) {
-      updateAccountBalance(targetAcc.id, data.type === 'Expense' ? -data.amount : data.amount);
-    } else {
-      const firstSpendingAcc = accounts.find(a => a.type === 'Debit' || a.type === 'Cash' || a.type === 'Credit');
-      if (firstSpendingAcc) updateAccountBalance(firstSpendingAcc.id, data.type === 'Expense' ? -data.amount : data.amount);
+  };
+
+  const handleIncomeConfirm = (accountId: string, isTransfer: boolean) => {
+    if (pendingIncome) {
+      addTransaction({
+        title: isTransfer ? `Перевод (доход)` : pendingIncome.category,
+        category: isTransfer ? 'Перевод' : pendingIncome.category,
+        amount: pendingIncome.amount,
+        type: isTransfer ? 'Transfer' : 'Income',
+        icon: isTransfer ? '🔄' : '💰',
+        accountId: accountId
+      });
+      setIsIncomeRoutingOpen(false);
+      setPendingIncome(null);
     }
-    
-    setIsMagicModalOpen(false);
+  };
+
+  const openEdit = (tx: Transaction) => {
+    setEditingTransaction(tx);
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -77,20 +110,12 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Reminder Alert */}
       <AnimatePresence>
         {dueToday.length > 0 && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0, marginBottom: 0 }}
-            animate={{ height: 'auto', opacity: 1, marginBottom: 24 }}
-            exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-6">
             <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-lg text-primary">
-                  <Calendar className="w-5 h-5" />
-                </div>
+                <div className="p-2 bg-primary/20 rounded-lg text-primary"><Calendar className="w-5 h-5" /></div>
                 <div>
                   <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Платёж сегодня</h4>
                   <p className="text-sm font-medium">{dueToday[0].title} — {dueToday[0].amount.toLocaleString()} ₽</p>
@@ -145,27 +170,43 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-3">
             {transactions.slice(0, 5).map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between p-4 rounded-2xl bg-[#1A1C23] border border-[#2E323E]">
+              <button 
+                key={tx.id} 
+                onClick={() => openEdit(tx)}
+                className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#1A1C23] border border-[#2E323E] hover:border-primary/30 transition-all active:scale-[0.98] text-left"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-[#2E323E]/50 flex items-center justify-center text-xl">
                     {tx.icon}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{tx.title}</p>
+                    <p className="font-medium text-sm text-white">{tx.title}</p>
                     <p className="text-xs text-gray-500">{tx.category} • {tx.time}</p>
                   </div>
                 </div>
                 <div className={`font-bold ${tx.type === 'Expense' ? 'text-white' : 'text-success'}`}>
                   {tx.type === 'Expense' ? '-' : '+'}{tx.amount.toLocaleString('ru-RU')} ₽
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </section>
 
-      <MagicInputModal isOpen={isMagicModalOpen} onClose={() => setIsMagicModalOpen(false)} onAdd={handleAddTransaction} />
+      <MagicInputModal isOpen={isMagicModalOpen} onClose={() => setIsMagicModalOpen(false)} onAdd={handleMagicAdd} />
       <RolloverModal isOpen={isRolloverOpen} onClose={() => setIsRolloverOpen(false)} surplus={remainingBudget} />
+      <EditTransactionModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        transaction={editingTransaction} 
+      />
+      <IncomeRoutingModal 
+        isOpen={isIncomeRoutingOpen} 
+        onClose={() => { setIsIncomeRoutingOpen(false); setPendingIncome(null); }}
+        incomeData={pendingIncome}
+        onConfirm={handleIncomeConfirm}
+        onAddNewAccount={() => router.push('/accounts')}
+      />
     </div>
   );
 }
