@@ -1,5 +1,5 @@
 "use client";
-import { Home, WalletCards, ArrowLeftRight, Settings } from 'lucide-react';
+import { Home, WalletCards, ArrowLeftRight, BarChart3, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,8 +9,8 @@ export function BottomNav() {
   const navItems = [
     { icon: Home, path: '/', label: 'Главная' },
     { icon: WalletCards, path: '/accounts', label: 'Счета' },
-    { icon: ArrowLeftRight, path: '/transfers', label: 'Переводы' },
-    { icon: Settings, path: '/settings', label: 'Настройки' }
+    { icon: BarChart3, path: '/analytics', label: 'Анализ' },
+    { icon: ArrowLeftRight, path: '/transfers', label: 'Движение' },
   ];
 
   return (
@@ -21,7 +21,8 @@ export function BottomNav() {
         return (
           <Link href={item.path} key={item.path} className="flex flex-col items-center gap-1 p-2">
             <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-gray-500 hover:text-gray-400'}`} />
-            {isActive && <div className="w-1 h-1 rounded-full bg-primary mt-1" />}
+            <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-primary' : 'text-gray-500'}`}>{item.label}</span>
+            {isActive && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
           </Link>
         );
       })}
