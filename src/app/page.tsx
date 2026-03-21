@@ -107,107 +107,119 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="pb-24 pt-24 px-4 h-full overflow-y-auto">
-      <header className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-gray-400 text-sm font-medium">Мои финансы</h2>
-          <h1 className="text-xl font-bold">Neural Finance</h1>
+    <div className="pb-32 pt-6 px-4 h-full overflow-y-auto">
+      <header className="flex justify-between items-center mb-10 px-2">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#282a2f] border border-white/5 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-[#d0bcff]">NF</span>
+          </div>
+          <h1 className="text-gradient font-extrabold tracking-tighter text-lg uppercase">NEURAL FINANCE</h1>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/reminders" className="relative w-10 h-10 rounded-full bg-[#1A1C23] border border-[#2E323E] flex items-center justify-center hover:text-primary transition-colors">
-            <Bell className="w-4 h-4" />
-            {dueToday.length > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-danger rounded-full border-2 border-[#0F1014] animate-pulse" />}
+          <Link href="/reminders" className="relative w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#cbc3d7]">
+            <span className="material-symbols-outlined !text-[22px]">notifications</span>
+            {dueToday.length > 0 && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#ffb4ab] rounded-full border border-[#111318]" />}
           </Link>
-          <button onClick={() => setIsRolloverOpen(true)} className="w-10 h-10 rounded-full bg-[#1A1C23] border border-[#2E323E] flex items-center justify-center hover:text-primary transition-colors">
-            <MoonStar className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
       <AnimatePresence>
         {dueToday.length > 0 && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-6">
-            <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center justify-between">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-8 px-2">
+            <div className="glass-card border-[#d0bcff]/20 rounded-2xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-lg text-primary"><Calendar className="w-5 h-5" /></div>
+                <span className="material-symbols-outlined text-[#d0bcff]">event_repeat</span>
                 <div>
-                  <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Платёж сегодня</h4>
-                  <p className="text-sm font-medium">{dueToday[0].title} — {dueToday[0].amount.toLocaleString()} ₽</p>
+                  <h4 className="text-[10px] font-bold text-[#d0bcff] uppercase tracking-wider">Due Today</h4>
+                  <p className="text-sm font-medium text-white">{dueToday[0].title}</p>
                 </div>
               </div>
-              <Link href="/reminders" className="bg-primary text-white text-[10px] font-bold px-3 py-2 rounded-lg">ОПЛАТИТЬ</Link>
+              <Link href="/reminders" className="bg-[#d0bcff] text-[#23005c] text-[10px] font-bold px-3 py-2 rounded-lg uppercase">PAY</Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <DailyLimitDial remaining={remainingBudget} total={dailyBudget} />
-
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <Link href="/accounts" className="bg-[#1A1C23] border border-[#2E323E] rounded-2xl p-4 hover:border-primary/50 transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-primary/10 rounded-lg"><Wallet className="w-5 h-5 text-primary" /></div>
-            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-primary transition-transform group-hover:translate-x-1" />
-          </div>
-          <p className="text-xs text-gray-500 mb-1">Свободно для трат</p>
-          <h3 className="text-xl font-bold">{spendingPower.toLocaleString('ru-RU')} ₽</h3>
-        </Link>
-
-        <Link href="/transactions" className="bg-[#1A1C23] border border-[#2E323E] rounded-2xl p-4 hover:border-danger/50 transition-all group">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-danger/10 rounded-lg"><TrendingDown className="w-5 h-5 text-danger" /></div>
-            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-danger transition-transform group-hover:translate-x-1" />
-          </div>
-          <p className="text-xs text-gray-500 mb-1">Траты сегодня</p>
-          <h3 className="text-xl font-bold">{totalExpensesToday.toLocaleString('ru-RU')} ₽</h3>
-        </Link>
-      </div>
-
-      <div className="flex justify-center mb-10">
-        <button onClick={() => setIsMagicModalOpen(true)} className="relative group bg-primary p-4 rounded-2xl w-full flex justify-center items-center gap-3 shadow-[0_0_25px_rgba(124,58,237,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all">
-          <Sparkles className="w-5 h-5 text-white animate-pulse" />
-          <span className="font-bold text-lg text-white">Новая запись</span>
-        </button>
-      </div>
-
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-lg">Последние операции</h3>
-          {transactions.length > 0 && <Link href="/transactions" className="text-xs text-primary">История</Link>}
+      <section className="flex flex-col items-center justify-center mb-12">
+        <DailyLimitDial remaining={remainingBudget} total={dailyBudget} totalBalance={spendingPower} />
+        <div className="mt-4 px-3 py-1 rounded-full bg-[#4cd7f6]/10 border border-[#4cd7f6]/20 flex items-center gap-1">
+          <span className="material-symbols-outlined text-[14px] text-[#4cd7f6]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+          <span className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-widest">Neural Optimized</span>
         </div>
-        
-        {transactions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 opacity-30 text-center">
-            <PlusCircle className="w-12 h-12 mb-3" />
-            <p className="text-sm">Пока нет операций.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {transactions.slice(0, 5).map((tx) => (
-              <button 
-                key={tx.id} 
-                onClick={() => openEdit(tx)}
-                className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#1A1C23] border border-[#2E323E] hover:border-primary/30 transition-all active:scale-[0.98] text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#2E323E]/50 flex items-center justify-center text-xl">
-                    {tx.icon}
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm text-white">{tx.title}</p>
-                    <p className="text-xs text-gray-500">{tx.category} • {tx.time}</p>
-                  </div>
-                </div>
-                <div className={`font-bold ${tx.type === 'Expense' ? 'text-white' : 'text-success'}`}>
-                  {tx.type === 'Expense' ? '-' : '+'}{tx.amount.toLocaleString('ru-RU')} ₽
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
       </section>
 
-      <MagicInputModal isOpen={isMagicModalOpen} onClose={() => setIsMagicModalOpen(false)} onAdd={handleMagicAdd} />
+      <div className="grid grid-cols-1 gap-6 mb-8 px-2">
+        {/* Accounts Section */}
+        <section className="space-y-4">
+          <div className="flex justify-between items-end px-2">
+            <h3 className="font-headline text-lg font-bold text-white">Accounts</h3>
+            <Link href="/accounts" className="text-[#d0bcff] text-xs font-semibold uppercase tracking-wider">View All</Link>
+          </div>
+          <div className="space-y-3">
+            {accounts.slice(0, 2).map((acc) => (
+              <div key={acc.id} className="glass-card p-5 rounded-xl flex justify-between items-center group cursor-pointer active:scale-[0.98] transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#33353a] flex items-center justify-center text-[#d0bcff] border border-white/5">
+                    <span className="material-symbols-outlined">{acc.type === 'Debit' ? 'account_balance' : 'token'}</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">{acc.name}</p>
+                    <p className="text-[#cbc3d7] text-xs opacity-70">{acc.bankName || acc.type}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-white font-bold text-sm">${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-[#4cd7f6] text-[10px] font-bold uppercase tracking-tighter">Liquid</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Transactions Section */}
+        <section className="space-y-4">
+          <div className="flex justify-between items-end px-2">
+            <h3 className="font-headline text-lg font-bold text-white">Recent Activity</h3>
+            <Link href="/transactions" className="text-[#d0bcff] text-xs font-semibold uppercase tracking-wider">History</Link>
+          </div>
+          <div className="glass-card rounded-xl overflow-hidden">
+            <div className="divide-y divide-white/5">
+              {transactions.length === 0 ? (
+                <div className="p-8 text-center text-[#cbc3d7] text-sm opacity-50">No operations yet.</div>
+              ) : (
+                transactions.slice(0, 5).map((tx) => (
+                  <button key={tx.id} onClick={() => openEdit(tx)} className="w-full p-4 flex justify-between items-center active:bg-white/5 transition-colors text-left">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-[#1a1b21] flex items-center justify-center border border-white/5">
+                        <span className="material-symbols-outlined text-[#4cd7f6] !text-[20px]">
+                          {tx.category.toLowerCase().includes('shop') ? 'shopping_bag' : 
+                           tx.category.toLowerCase().includes('food') ? 'restaurant' : 
+                           tx.type === 'Income' ? 'payments' : 'receipt_long'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{tx.title}</p>
+                        <p className="text-[10px] text-[#cbc3d7]">{tx.category} • {tx.time}</p>
+                      </div>
+                    </div>
+                    <p className={`text-sm font-bold ${tx.type === 'Expense' ? 'text-[#ffb4ab]' : 'text-[#4cd7f6]'}`}>
+                      {tx.type === 'Expense' ? '-' : '+'}${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* FAB: Magic Input */}
+      <button 
+        onClick={() => setIsMagicModalOpen(true)}
+        className="fixed bottom-28 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#d0bcff] to-[#4cd7f6] shadow-[0_10px_30px_rgba(208,188,255,0.4)] flex items-center justify-center text-[#23005c] z-50 active:scale-95 transition-transform"
+      >
+        <span className="material-symbols-outlined !text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+      </button>
       <RolloverModal isOpen={isRolloverOpen} onClose={() => setIsRolloverOpen(false)} surplus={remainingBudget} />
       <EditTransactionModal 
         isOpen={isEditModalOpen} 

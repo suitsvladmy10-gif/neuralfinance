@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0F1014;
-  --foreground: #FFFFFF;
+  --background: #111318;
+  --foreground: #e2e2e9;
+  --primary: #d0bcff;
+  --secondary: #4cd7f6;
 }
 
 body {
@@ -13,28 +15,30 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hide scrollbar for clean aesthetic */
+/* Hide scrollbar */
 ::-webkit-scrollbar {
   width: 0px;
   background: transparent; 
 }
 
-/* Glassmorphism utility */
-.glass {
-  background: rgba(26, 28, 35, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.glass-card {
+  background: rgba(51, 53, 58, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, #d0bcff, #4cd7f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .glow-primary {
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  box-shadow: 0 0 20px rgba(208, 188, 255, 0.2);
 }
 
-.glow-success {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-}
-
-.glow-danger {
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+.glow-secondary {
+  box-shadow: 0 0 20px rgba(76, 215, 246, 0.2);
 }

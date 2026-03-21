@@ -9,16 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0F1014",
-        foreground: "#FFFFFF",
-        primary: "#7C3AED", // Electric purple
-        secondary: "#3B82F6", // Blue accent
-        success: "#10B981", // Vibrant green
-        danger: "#EF4444", // Red warning
-        warning: "#F59E0B", // Orange warning
-        surface: "#1A1C23", // Dark grey surface
-        surfaceHover: "#252830", // Slightly lighter for hover
-        border: "#2E323E"
+        background: "#111318",
+        foreground: "#e2e2e9",
+        primary: "#d0bcff",
+        secondary: "#4cd7f6",
+        success: "#4cd7f6",
+        danger: "#ffb4ab",
+        warning: "#facc15",
+        surface: "#1a1b21",
+        surfaceHover: "#282a2f",
+        border: "#282a2f"
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
