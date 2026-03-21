@@ -60,9 +60,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="pb-32 pt-6 px-4 h-full overflow-y-auto bg-[#111318]">
-      {/* Header - Aligned with SVG pattern */}
-      <header className="flex justify-between items-center mb-8 px-2">
+    <div className="pb-32 pt-12 px-4 h-full overflow-y-auto bg-[#111318]">
+      {/* Header - Pushed down for TMA UI */}
+      <header className="flex justify-between items-center mb-10 px-2 mt-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full overflow-hidden bg-[#282a2f] border border-white/5 flex items-center justify-center">
             <span className="text-[10px] font-bold text-[#d0bcff]">NF</span>
@@ -77,13 +77,22 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Daily Limit Centerpiece - Matching SVG structure */}
+      {/* Daily Limit Centerpiece */}
       <section className="flex flex-col items-center justify-center mb-10 relative">
         <div className="text-[#d0bcff] font-bold text-xs tracking-[0.2em] mb-6 uppercase">Daily Limit</div>
         <DailyLimitDial remaining={remainingBudget} total={dailyBudget} totalBalance={totalBalance} />
-        <div className="mt-6 px-4 py-1.5 rounded-full bg-[#4cd7f6]/10 border border-[#4cd7f6]/20 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[14px] text-[#4cd7f6]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-          <span className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-widest">Neural Optimized</span>
+        
+        {/* New Daily Status Badge */}
+        <div className="mt-8 glass-card rounded-2xl p-4 w-full flex justify-between items-center max-w-[280px] border-[#4cd7f6]/10">
+          <div className="text-center flex-1">
+            <p className="text-[9px] text-[#cbc3d7] uppercase tracking-widest mb-1">Spent Today</p>
+            <p className="text-sm font-bold text-[#ffb4ab]">${totalExpensesToday.toLocaleString('en-US')}</p>
+          </div>
+          <div className="w-px h-8 bg-white/10 mx-2"></div>
+          <div className="text-center flex-1">
+            <p className="text-[9px] text-[#cbc3d7] uppercase tracking-widest mb-1">Left to Spend</p>
+            <p className="text-sm font-bold text-[#4cd7f6]">${Math.max(0, remainingBudget).toLocaleString('en-US')}</p>
+          </div>
         </div>
       </section>
 
@@ -134,7 +143,7 @@ export default function Dashboard() {
                         <span className="material-symbols-outlined text-[#4cd7f6] !text-[20px]">
                           {tx.category.toLowerCase().includes('shop') ? 'shopping_bag' : 
                            tx.category.toLowerCase().includes('food') ? 'restaurant' : 
-                           tx.type === 'Income' ? 'payments' : 'receipt_long'}
+                           'payments'}
                         </span>
                       </div>
                       <div>
@@ -153,12 +162,12 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {/* FAB: Magic Button - Aligned with SVG gradient */}
+      {/* FAB: Plus Button - Changed from Magic to Plus Circle */}
       <button 
         onClick={() => setIsMagicModalOpen(true)}
-        className="fixed bottom-28 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#d0bcff] to-[#4cd7f6] shadow-[0_10px_30px_rgba(208,188,255,0.4)] flex items-center justify-center text-[#23005c] z-50 active:scale-90 transition-all hover:brightness-110 active:rotate-12"
+        className="fixed bottom-28 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#d0bcff] to-[#4cd7f6] shadow-[0_10px_30px_rgba(208,188,255,0.4)] flex items-center justify-center text-[#23005c] z-50 active:scale-90 transition-all hover:brightness-110"
       >
-        <span className="material-symbols-outlined !text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+        <span className="material-symbols-outlined !text-[32px]">add</span>
       </button>
 
       {/* Modals */}
