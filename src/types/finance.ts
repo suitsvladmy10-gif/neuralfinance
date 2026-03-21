@@ -1,4 +1,4 @@
-export type AccountType = 'Debit' | 'Credit' | 'Crypto' | 'Cash' | 'Savings' | 'PersonalDebt';
+export type AccountType = 'Debit' | 'Credit' | 'Crypto' | 'Cash' | 'Savings' | 'PersonalDebt' | 'Investment';
 
 export interface Account {
   id: string;
