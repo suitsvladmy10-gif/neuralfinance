@@ -1,177 +1,153 @@
 "use client";
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Plus, Calendar, CreditCard, Trash2, CheckCircle2, Bell, X, Landmark, Tag, Edit2, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinance, Reminder } from '@/lib/store';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function RemindersPage() {
-  const { reminders, accounts, addReminder, updateReminder, confirmReminder, deleteReminder } = useFinance();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const { reminders, addReminder, updateReminder, deleteReminder, confirmReminder, accounts } = useFinance();
+  const router = useRouter();
   
-  const [formData, setFormData] = useState({
-    title: '',
-    amount: '',
-    dayOfMonth: '1',
-    accountId: '',
-    receiver: '',
-    category: 'Платежи',
-    icon: '🔔',
-    type: 'subscription' as 'subscription' | 'bill' | 'one-time',
-    isMandatory: false
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
 
+  const today = new Date().getDate();
   const currentMonth = new Date().toISOString().substring(0, 7);
 
-  // Годовые расчеты
-  const annualStats = useMemo(() => {
-    const subs = reminders.filter(r => r.type === 'subscription');
-    const mandatory = reminders.filter(r => r.isMandatory);
-    
-    return {
-      subscriptionsYear: subs.reduce((acc, curr) => acc + curr.amount * 12, 0),
-      mandatoryYear: mandatory.reduce((acc, curr) => acc + (curr.dayOfMonth ? curr.amount * 12 : curr.amount), 0)
-    };
-  }, [reminders]);
+  const dueSoon = useMemo(() => 
+    reminders.filter(r => r.dayOfMonth && r.dayOfMonth >= today && r.dayOfMonth <= today + 7 && r.lastConfirmedDate !== currentMonth)
+    .sort((a, b) => (a.dayOfMonth || 0) - (b.dayOfMonth || 0))
+  , [reminders, today, currentMonth]);
 
-  const handleOpenEdit = (rem: Reminder) => {
-    setEditingId(rem.id);
-    setFormData({
-      title: rem.title,
-      amount: rem.amount.toString(),
-      dayOfMonth: rem.dayOfMonth?.toString() || '1',
-      accountId: rem.accountId,
-      receiver: rem.receiver || '',
-      category: rem.category,
-      icon: rem.icon,
-      type: rem.type,
-      isMandatory: rem.isMandatory
-    });
-    setIsModalOpen(true);
-  };
+  const totalMonthly = useMemo(() => 
+    reminders.reduce((acc, curr) => acc + curr.amount, 0)
+  , [reminders]);
 
-  const handleSave = () => {
-    const data = {
-      ...formData,
-      amount: parseFloat(formData.amount) || 0,
-      dayOfMonth: parseInt(formData.dayOfMonth) || 1,
-    };
+  const paidThisMonth = useMemo(() => 
+    reminders.filter(r => r.lastConfirmedDate === currentMonth)
+    .reduce((acc, curr) => acc + curr.amount, 0)
+  , [reminders, currentMonth]);
 
-    if (editingId) {
-      updateReminder(editingId, data as any);
-    } else {
-      addReminder(data as any);
-    }
-    closeModal();
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingId(null);
-    setFormData({ title: '', amount: '', dayOfMonth: '1', accountId: '', receiver: '', category: 'Платежи', icon: '🔔', type: 'subscription', isMandatory: false });
-  };
+  const progress = totalMonthly > 0 ? (paidThisMonth / totalMonthly) * 100 : 0;
 
   return (
-    <div className="pb-24 pt-24 px-4 h-full overflow-y-auto">
-      <header className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="p-2 bg-[#1A1C23] border border-[#2E323E] rounded-full">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-2xl font-bold">Планирование</h1>
+    <div className="pb-32 pt-12 px-4 h-full overflow-y-auto bg-[#111318]">
+      {/* Header Aligned with design */}
+      <header className="flex flex-col gap-6 mb-8 px-2 mt-4">
+        <div className="flex justify-between items-center">
+          <button onClick={() => router.back()} className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#cbc3d7]">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 className="text-[#e2e2e9] font-extrabold text-lg uppercase tracking-tighter font-headline">Planning & Reminders</h1>
+          <button onClick={() => { setEditingReminder(null); setIsModalOpen(true); }} className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#d0bcff]">
+            <span className="material-symbols-outlined">add</span>
+          </button>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-          <Plus className="w-5 h-5" />
-        </button>
+
+        {/* Monthly Planning Summary Card */}
+        <div className="glass-card rounded-3xl p-6 border-[#d0bcff]/10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#4cd7f6]/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
+          <p className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] mb-1">Monthly Budget Allocated</p>
+          <h2 className="text-3xl font-extrabold text-white tracking-tighter mb-4">${totalMonthly.toLocaleString('en-US', { minimumFractionDigits: 2 })}</h2>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+              <span className="text-[#cbc3d7]">Progress</span>
+              <span className="text-[#4cd7f6]">{Math.round(progress)}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="h-full bg-gradient-to-r from-[#d0bcff] to-[#4cd7f6]"
+              />
+            </div>
+          </div>
+        </div>
       </header>
 
-      {/* Annual Summary */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-primary/10 border border-primary/20 rounded-3xl p-4">
-          <p className="text-[10px] text-primary font-bold uppercase mb-1">Подписки / год</p>
-          <h3 className="text-lg font-bold">{annualStats.subscriptionsYear.toLocaleString()} ₽</h3>
-        </div>
-        <div className="bg-warning/10 border border-warning/20 rounded-3xl p-4">
-          <p className="text-[10px] text-warning font-bold uppercase mb-1">Обязательные / год</p>
-          <h3 className="text-lg font-bold">{annualStats.mandatoryYear.toLocaleString()} ₽</h3>
-        </div>
-      </div>
+      {/* Due Soon Section */}
+      {dueSoon.length > 0 && (
+        <section className="mb-10 px-2">
+          <h3 className="text-[10px] font-bold text-[#d0bcff] uppercase tracking-[0.2em] mb-4 ml-2">Urgent Payments</h3>
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+            {dueSoon.map((rem) => (
+              <div key={rem.id} className="min-w-[200px] glass-card p-4 rounded-2xl border-[#d0bcff]/20">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#d0bcff]/10 flex items-center justify-center text-[#d0bcff]">
+                    <span className="material-symbols-outlined">{rem.icon || 'event_repeat'}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-[#d0bcff] bg-[#d0bcff]/10 px-2 py-1 rounded-lg">Day {rem.dayOfMonth}</span>
+                </div>
+                <h4 className="text-white font-bold text-sm mb-1 truncate">{rem.title}</h4>
+                <p className="text-xl font-extrabold text-white mb-3">${rem.amount.toLocaleString()}</p>
+                <button 
+                  onClick={() => confirmReminder(rem.id)}
+                  className="w-full py-2 bg-[#d0bcff] text-[#23005c] text-[10px] font-bold rounded-xl uppercase tracking-wider active:scale-95 transition-transform"
+                >
+                  Pay Now
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <div className="space-y-4">
-        {reminders.map(rem => {
-          const isConfirmed = rem.lastConfirmedDate === currentMonth;
-          return (
-            <div key={rem.id} className={`p-5 rounded-3xl bg-[#1A1C23] border transition-all ${isConfirmed ? 'opacity-50 border-success/20' : 'border-[#2E323E]'}`}>
-              <div className="flex justify-between items-start mb-4">
+      {/* All Reminders List */}
+      <section className="space-y-4 px-2">
+        <h3 className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] mb-4 ml-2">All Subscriptions & Bills</h3>
+        <div className="space-y-3">
+          {reminders.length === 0 ? (
+            <div className="py-20 text-center opacity-30">
+              <span className="material-symbols-outlined !text-6xl mb-4">notifications_off</span>
+              <p className="text-sm font-medium">No active reminders</p>
+            </div>
+          ) : (
+            reminders.map((rem) => (
+              <div 
+                key={rem.id} 
+                className={`glass-card p-5 rounded-2xl border-white/5 flex justify-between items-center active:scale-[0.98] transition-all group ${rem.lastConfirmedDate === currentMonth ? 'opacity-50' : ''}`}
+              >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#2E323E] flex items-center justify-center text-2xl">{rem.icon}</div>
+                  <div className={`w-12 h-12 rounded-full bg-[#1a1b21] border border-white/5 flex items-center justify-center shadow-inner ${rem.lastConfirmedDate === currentMonth ? 'text-[#cbc3d7]' : 'text-[#4cd7f6]'}`}>
+                    <span className="material-symbols-outlined !text-2xl">{rem.icon || 'description'}</span>
+                  </div>
                   <div>
-                    <h4 className="font-bold flex items-center gap-2">
-                      {rem.title}
-                      {rem.isMandatory && <AlertCircle className="w-3 h-3 text-warning" />}
-                    </h4>
-                    <p className="text-xs text-gray-500">{rem.receiver || rem.category}</p>
+                    <h3 className="text-white font-bold text-sm">{rem.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-tighter opacity-60">Every month</span>
+                      <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                      <span className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-tighter">Day {rem.dayOfMonth}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-lg">{rem.amount.toLocaleString()} ₽</p>
-                  <button onClick={() => handleOpenEdit(rem)} className="text-primary text-[10px] font-bold">ИЗМЕНИТЬ</button>
+                  <p className="text-white font-extrabold text-base tracking-tight">${rem.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  {rem.lastConfirmedDate === currentMonth ? (
+                    <span className="text-[9px] font-bold text-[#4cd7f6] uppercase tracking-widest bg-[#4cd7f6]/10 px-2 py-0.5 rounded-full">Paid</span>
+                  ) : (
+                    <button 
+                      onClick={() => confirmReminder(rem.id)}
+                      className="text-[#d0bcff] text-[10px] font-bold uppercase hover:underline"
+                    >
+                      Confirm
+                    </button>
+                  )}
                 </div>
               </div>
-              
-              <div className="flex gap-2">
-                {!isConfirmed ? (
-                  <button onClick={() => confirmReminder(rem.id)} className="flex-1 bg-primary text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> ОПЛАТИТЬ
-                  </button>
-                ) : (
-                  <div className="flex-1 bg-success/10 text-success py-3 rounded-xl text-xs font-bold text-center">ОПЛАЧЕНО</div>
-                )}
-                <button onClick={() => deleteReminder(rem.id)} className="p-3 bg-danger/10 text-danger rounded-xl"><Trash2 className="w-4 h-4" /></button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            ))
+          )}
+        </div>
+      </section>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <motion.div className="w-full max-w-sm bg-[#1A1C23] border border-[#2E323E] rounded-3xl p-6" initial={{ scale: 0.9 }}>
-              <h2 className="text-xl font-bold mb-6">{editingId ? 'Редактировать' : 'Новое напоминание'}</h2>
-              
-              <div className="space-y-4">
-                <input type="text" placeholder="Название" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-[#2E323E] rounded-xl p-3 outline-none" />
-                <div className="flex gap-2">
-                  <input type="number" placeholder="Сумма" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} className="flex-1 bg-[#2E323E] rounded-xl p-3 outline-none font-bold" />
-                  <input type="number" placeholder="День" value={formData.dayOfMonth} onChange={e => setFormData({...formData, dayOfMonth: e.target.value})} className="w-20 bg-[#2E323E] rounded-xl p-3 outline-none text-center" />
-                </div>
-
-                <div onClick={() => setFormData({...formData, isMandatory: !formData.isMandatory})} className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${formData.isMandatory ? 'bg-warning/10 border-warning/50' : 'bg-[#2E323E] border-transparent opacity-50'}`}>
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className={`w-5 h-5 ${formData.isMandatory ? 'text-warning' : 'text-gray-500'}`} />
-                    <span className="text-sm font-bold">Обязательная трата</span>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${formData.isMandatory ? 'border-warning bg-warning' : 'border-gray-600'}`}>
-                    {formData.isMandatory && <CheckCircle2 className="w-4 h-4 text-black" />}
-                  </div>
-                </div>
-
-                <select value={formData.accountId} onChange={e => setFormData({...formData, accountId: e.target.value})} className="w-full bg-[#2E323E] rounded-xl p-3 outline-none">
-                  <option value="">Выберите счет</option>
-                  {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
-                </select>
-
-                <div className="flex gap-2">
-                  <button onClick={closeModal} className="flex-1 bg-[#2E323E] py-4 rounded-xl font-bold">Отмена</button>
-                  <button onClick={handleSave} className="flex-1 bg-primary py-4 rounded-xl font-bold">Сохранить</button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* FAB: Add Placeholder */}
+      <button 
+        onClick={() => { setEditingReminder(null); setIsModalOpen(true); }}
+        className="fixed bottom-28 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#d0bcff] to-[#4cd7f6] shadow-[0_10px_30px_rgba(208,188,255,0.4)] flex items-center justify-center text-[#23005c] z-50 active:scale-90 transition-all hover:brightness-110"
+      >
+        <span className="material-symbols-outlined !text-[28px]">add_alert</span>
+      </button>
     </div>
   );
 }
