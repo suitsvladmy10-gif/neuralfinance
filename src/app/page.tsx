@@ -139,13 +139,6 @@ export default function Dashboard() {
                 transactions.slice(0, 4).map((tx) => (
                   <button key={tx.id} onClick={() => openEdit(tx)} className="w-full p-4 flex justify-between items-center active:bg-white/5 transition-colors text-left">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-[#1a1b21] flex items-center justify-center border border-white/5 shadow-inner">
-                        <span className="material-symbols-outlined text-[#4cd7f6] !text-[20px]">
-                          {tx.category.toLowerCase().includes('shop') ? 'shopping_bag' : 
-                           tx.category.toLowerCase().includes('food') ? 'restaurant' : 
-                           'payments'}
-                        </span>
-                      </div>
                       <div>
                         <p className="text-sm font-bold text-[#e2e2e9]">{tx.title}</p>
                         <p className="text-[10px] text-[#cbc3d7] uppercase tracking-tighter">{tx.category} • {tx.time}</p>
