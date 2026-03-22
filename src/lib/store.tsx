@@ -202,6 +202,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       });
       const currentMonth = new Date().toISOString().substring(0, 7);
       setReminders(prev => prev.map(r => r.id === id ? { ...r, lastConfirmedDate: currentMonth } : r));
+      
+      if (user && id.length > 20) {
+        await FinanceService.updateReminderStatus(id, currentMonth);
+      }
     }
   };
 

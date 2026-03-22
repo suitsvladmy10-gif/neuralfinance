@@ -64,38 +64,47 @@ export const FinanceService = {
     return await supabase.from('transactions').delete().eq('id', txId);
   },
 
-  // Reminders
+  // Reminders (NOW USING 'reminders' TABLE)
   async getReminders(userId: string): Promise<Reminder[]> {
     const { data, error } = await supabase
-      .from('debts') // Using debts table as a placeholder for reminders/bills
+      .from('reminders')
       .select('*')
       .eq('user_id', userId);
-    if (error) throw error;
+    
+    if (error) {
+      console.warn("Reminders table not found or error, falling back to empty array. Ensure 'reminders' table exists in Supabase.");
+      return [];
+    }
+
     return (data || []).map(r => ({
       id: r.id,
-      title: r.person_name, // Mapping person_name to title
+      title: r.title,
       amount: Number(r.amount),
-      isMandatory: true,
-      type: 'bill',
-      category: 'Платежи',
-      icon: '🔔',
-      accountId: '',
-      lastConfirmedDate: r.metadata?.lastConfirmedDate
+      dayOfMonth: r.day_of_month,
+      accountId: r.account_id,
+      category: r.category || 'Subscription',
+      icon: r.icon || 'notifications',
+      type: r.type || 'subscription',
+      isMandatory: r.is_mandatory ?? true,
+      lastConfirmedDate: r.last_confirmed_date
     }));
   },
 
   async createReminder(userId: string, rem: Partial<Reminder>) {
-    return await supabase.from('debts').insert({
+    return await supabase.from('reminders').insert({
       user_id: userId,
-      person_name: rem.title,
+      title: rem.title,
       amount: rem.amount,
-      metadata: { 
-        type: rem.type, 
-        icon: rem.icon, 
-        accountId: rem.accountId,
-        dayOfMonth: rem.dayOfMonth,
-        isMandatory: rem.isMandatory
-      }
+      day_of_month: rem.dayOfMonth,
+      account_id: rem.accountId,
+      category: rem.category,
+      icon: rem.icon,
+      type: rem.type,
+      is_mandatory: rem.isMandatory
     }).select();
+  },
+
+  async updateReminderStatus(reminderId: string, lastConfirmedDate: string) {
+    return await supabase.from('reminders').update({ last_confirmed_date: lastConfirmedDate }).eq('id', reminderId);
   }
 };
