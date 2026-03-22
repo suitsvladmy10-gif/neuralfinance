@@ -45,64 +45,79 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   // Инициализация при входе
   useEffect(() => {
     async function initAuthAndSync() {
-      setLoading(true);
-      
-      // 1. Определение пользователя
-      const tg = (window as any).Telegram?.WebApp;
-      const tgUser = tg?.initDataUnsafe?.user;
-      const { data: { user: sbUser } } = await supabase.auth.getUser();
-      
-      let currentUser: UserProfile | null = null;
-      if (sbUser) {
-        currentUser = { id: sbUser.id, db_uuid: sbUser.id, source: 'supabase' };
-      } else if (tgUser) {
-        currentUser = { 
-          id: `tg_${tgUser.id}`, 
-          db_uuid: getUuidFromTg(tgUser.id), 
-          source: 'telegram', 
-          name: tgUser.first_name 
-        };
-        // Гарантируем наличие пользователя в БД
-        await supabase.from('users').upsert({ id: currentUser.db_uuid, name: currentUser.name || 'TG User' });
-      }
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Sync Timeout')), 5000)
+      );
 
-      setUser(currentUser);
-
-      // 2. Мгновенная загрузка из кэша (Offline-first)
-      const prefix = currentUser ? `${currentUser.id}_` : 'nf_';
-      const cachedAccs = localStorage.getItem(`${prefix}accounts`);
-      const cachedTxs = localStorage.getItem(`${prefix}transactions`);
-      const cachedReminders = localStorage.getItem(`${prefix}reminders`);
-      const cachedBudget = localStorage.getItem(`${prefix}budget`);
-
-      if (cachedAccs) setAccounts(JSON.parse(cachedAccs));
-      if (cachedTxs) setTransactions(JSON.parse(cachedTxs).map((t: any) => ({ ...t, date: new Date(t.date) })));
-      if (cachedReminders) setReminders(JSON.parse(cachedReminders));
-      if (cachedBudget) setBudget(JSON.parse(cachedBudget));
-
-      // 3. Фоновая синхронизация с облаком (Cloud Sync)
-      if (currentUser) {
-        try {
-          const [accs, txs, rems] = await Promise.all([
-            FinanceService.getAccounts(currentUser.db_uuid),
-            FinanceService.getTransactions(currentUser.db_uuid),
-            FinanceService.getReminders(currentUser.db_uuid)
-          ]);
-          
-          if (accs.length > 0) setAccounts(accs);
-          if (txs.length > 0) setTransactions(txs);
-          if (rems.length > 0) setReminders(rems);
-          
-          // Обновляем кэш после облачной синхронизации
-          localStorage.setItem(`${prefix}accounts`, JSON.stringify(accs));
-          localStorage.setItem(`${prefix}transactions`, JSON.stringify(txs));
-          localStorage.setItem(`${prefix}reminders`, JSON.stringify(rems));
-        } catch (e) {
-          console.warn("Cloud sync failed, using offline data", e);
+      try {
+        setLoading(true);
+        
+        // 1. Определение пользователя
+        const tg = (window as any).Telegram?.WebApp;
+        const tgUser = tg?.initDataUnsafe?.user;
+        
+        // Оборачиваем критические вызовы в Promise.race для предотвращения зависания
+        const { data: { user: sbUser } } = await (Promise.race([
+          supabase.auth.getUser(),
+          timeoutPromise
+        ]) as any);
+        
+        let currentUser: UserProfile | null = null;
+        if (sbUser) {
+          currentUser = { id: sbUser.id, db_uuid: sbUser.id, source: 'supabase' };
+        } else if (tgUser) {
+          currentUser = { 
+            id: `tg_${tgUser.id}`, 
+            db_uuid: getUuidFromTg(tgUser.id), 
+            source: 'telegram', 
+            name: tgUser.first_name 
+          };
+          // Фоновая регистрация TG пользователя
+          supabase.from('users').upsert({ id: currentUser.db_uuid, name: currentUser.name || 'TG User' }).then();
         }
+
+        setUser(currentUser);
+
+        // 2. Мгновенная загрузка из кэша (Offline-first)
+        const prefix = currentUser ? `${currentUser.id}_` : 'nf_';
+        const cachedAccs = localStorage.getItem(`${prefix}accounts`);
+        const cachedTxs = localStorage.getItem(`${prefix}transactions`);
+        const cachedReminders = localStorage.getItem(`${prefix}reminders`);
+        const cachedBudget = localStorage.getItem(`${prefix}budget`);
+
+        if (cachedAccs) setAccounts(JSON.parse(cachedAccs));
+        if (cachedTxs) setTransactions(JSON.parse(cachedTxs).map((t: any) => ({ ...t, date: new Date(t.date) })));
+        if (cachedReminders) setReminders(JSON.parse(cachedReminders));
+        if (cachedBudget) setBudget(JSON.parse(cachedBudget));
+
+        // 3. Фоновая синхронизация с облаком (Cloud Sync)
+        if (currentUser) {
+          try {
+            const [accs, txs, rems] = await (Promise.race([
+              Promise.all([
+                FinanceService.getAccounts(currentUser.db_uuid),
+                FinanceService.getTransactions(currentUser.db_uuid),
+                FinanceService.getReminders(currentUser.db_uuid)
+              ]),
+              timeoutPromise
+            ]) as any);
+            
+            if (accs.length > 0) setAccounts(accs);
+            if (txs.length > 0) setTransactions(txs);
+            if (rems.length > 0) setReminders(rems);
+            
+            localStorage.setItem(`${prefix}accounts`, JSON.stringify(accs));
+            localStorage.setItem(`${prefix}transactions`, JSON.stringify(txs));
+            localStorage.setItem(`${prefix}reminders`, JSON.stringify(rems));
+          } catch (e) {
+            console.warn("Cloud sync timed out or failed, using offline data", e);
+          }
+        }
+      } catch (e) {
+        console.error("Initialization error, falling back to basic offline mode", e);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     }
     initAuthAndSync();
   }, []);
