@@ -44,6 +44,15 @@ export interface BudgetConfig {
   mode: 'manual' | 'auto';
 }
 
+export interface MagicAddData {
+  amount: number;
+  category: string;
+  accountName: string;
+  type: 'Expense' | 'Income' | 'Transfer';
+  accountId?: string;
+  title?: string;
+}
+
 export interface UserProfile {
   id: string;
   db_uuid: string;

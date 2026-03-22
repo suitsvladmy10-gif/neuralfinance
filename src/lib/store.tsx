@@ -57,10 +57,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         const tgUser = tg?.initDataUnsafe?.user;
         
         // Оборачиваем критические вызовы в Promise.race для предотвращения зависания
-        const { data: { user: sbUser } } = await (Promise.race([
+        const authResponse = await (Promise.race([
           supabase.auth.getUser(),
           timeoutPromise
-        ]) as any);
+        ]) as Promise<{ data: { user: any } }>);
+        
+        const sbUser = authResponse.data?.user;
         
         let currentUser: UserProfile | null = null;
         if (sbUser) {
@@ -86,7 +88,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         const cachedBudget = localStorage.getItem(`${prefix}budget`);
 
         if (cachedAccs) setAccounts(JSON.parse(cachedAccs));
-        if (cachedTxs) setTransactions(JSON.parse(cachedTxs).map((t: any) => ({ ...t, date: new Date(t.date) })));
+        if (cachedTxs) setTransactions(JSON.parse(cachedTxs).map((t: Transaction) => ({ ...t, date: new Date(t.date) })));
         if (cachedReminders) setReminders(JSON.parse(cachedReminders));
         if (cachedBudget) setBudget(JSON.parse(cachedBudget));
 
@@ -100,7 +102,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
                 FinanceService.getReminders(currentUser.db_uuid)
               ]),
               timeoutPromise
-            ]) as any);
+            ]) as Promise<[Account[], Transaction[], Reminder[]]>);
             
             if (accs.length > 0) setAccounts(accs);
             if (txs.length > 0) setTransactions(txs);

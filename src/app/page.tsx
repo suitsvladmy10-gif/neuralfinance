@@ -5,7 +5,7 @@ import { MagicInputModal } from '@/components/MagicInputModal';
 import { EditTransactionModal } from '@/components/EditTransactionModal';
 import Link from 'next/link';
 import { useFinance } from '@/lib/store';
-import { Transaction } from '@/types/finance';
+import { Transaction, MagicAddData } from '@/types/finance';
 import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
@@ -38,12 +38,12 @@ export default function Dashboard() {
   const dailyBudget = budget.dailyLimit; 
   const remainingBudget = dailyBudget - totalExpensesToday;
 
-  const handleMagicAdd = (data: any) => {
+  const handleMagicAdd = (data: MagicAddData) => {
     addTransaction({ 
       title: data.title || data.category, 
       category: data.category, 
       amount: data.amount, 
-      type: data.type, 
+      type: data.type as 'Expense' | 'Income', 
       icon: 'auto_awesome',
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
     });
