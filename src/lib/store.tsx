@@ -159,18 +159,29 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const deleteTransaction = async (id: string) => {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
+
+    // 1. Удаляем локально мгновенно для отзывчивости
     setTransactions(prev => prev.filter(t => t.id !== id));
+
+    // 2. Если есть привязка к счету, откатываем баланс
     if (tx.accountId) {
       const reverse = tx.type === 'Expense' ? tx.amount : -tx.amount;
       const targetAcc = accounts.find(a => a.id === tx.accountId);
       if (targetAcc) {
         const newBalance = targetAcc.balance + reverse;
         setAccounts(prev => prev.map(a => a.id === tx.accountId ? { ...a, balance: newBalance } : a));
-        if (user && id.length > 20) {
-          await Promise.all([
-            FinanceService.deleteTransaction(id),
-            FinanceService.updateAccountBalance(tx.accountId, newBalance)
-          ]);
+        
+        // 3. Удаляем из БД если это не временный ID (временные ID обычно короткие или не UUID)
+        const isPersistent = id.includes('-') || id.length > 15;
+        if (user && isPersistent) {
+          try {
+            await Promise.all([
+              FinanceService.deleteTransaction(id),
+              FinanceService.updateAccountBalance(tx.accountId, newBalance)
+            ]);
+          } catch (e) {
+            console.error("Failed to delete from DB, transaction might reappear", e);
+          }
         }
       }
     }
