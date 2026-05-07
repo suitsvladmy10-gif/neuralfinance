@@ -16,7 +16,7 @@ interface SavingsRoutingModalProps {
 export function SavingsRoutingModal({ isOpen, onClose, savingsData, onConfirm, onAddNewGoal }: SavingsRoutingModalProps) {
   const { accounts } = useFinance();
   const [selectedTargetId, setSelectedTargetId] = useState<string>('');
-  const [selectedSourceId, setSelectedSelectedSourceId] = useState<string>('');
+  const [selectedSourceId, setSelectedSourceId] = useState<string>('');
 
   const goals = accounts.filter(a => a.type === 'Savings');
   const sourceAccounts = accounts.filter(a => a.type !== 'Savings');
@@ -68,7 +68,7 @@ export function SavingsRoutingModal({ isOpen, onClose, savingsData, onConfirm, o
                   {sourceAccounts.map(acc => (
                     <button
                       key={acc.id}
-                      onClick={() => setSelectedSelectedSourceId(acc.id)}
+                      onClick={() => setSelectedSourceId(acc.id)}
                       className={`flex-shrink-0 p-4 rounded-2xl border transition-all ${selectedSourceId === acc.id ? 'bg-primary/10 border-primary' : 'bg-[#2E323E]/30 border-[#2E323E]'}`}
                     >
                       <p className="text-xs font-bold text-white mb-1">{acc.name}</p>

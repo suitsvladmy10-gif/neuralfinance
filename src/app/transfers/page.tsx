@@ -112,7 +112,7 @@ export default function TransfersPage() {
   );
 }
 
-function TabButton({ active, onClick, icon, label }: any) {
+function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: string; label: string }) {
   return (
     <button 
       onClick={onClick} 

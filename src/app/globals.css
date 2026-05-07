@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #111318;
+  --color-foreground: #e2e2e9;
+  --color-primary: #d0bcff;
+  --color-secondary: #4cd7f6;
+  --color-success: #4cd7f6;
+  --color-danger: #ffb4ab;
+  --color-warning: #facc15;
+  --color-surface: #1a1b21;
+  --color-surface-hover: #282a2f;
+  --font-headline: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 :root {
   --background: #111318;
   --foreground: #e2e2e9;
@@ -15,10 +28,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hide scrollbar */
 ::-webkit-scrollbar {
   width: 0px;
-  background: transparent; 
+  background: transparent;
 }
 
 .glass-card {
@@ -41,4 +53,27 @@ body {
 
 .glow-secondary {
   box-shadow: 0 0 20px rgba(76, 215, 246, 0.2);
+}
+
+.glow-success {
+  box-shadow: 0 0 24px rgba(76, 215, 246, 0.4), 0 0 48px rgba(76, 215, 246, 0.15);
+  text-shadow: 0 0 20px rgba(76, 215, 246, 0.5);
+}
+
+.dial-shadow {
+  filter: drop-shadow(0 0 15px rgba(76, 215, 246, 0.1));
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }

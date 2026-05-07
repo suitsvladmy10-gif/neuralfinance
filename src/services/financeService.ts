@@ -9,7 +9,7 @@ export const FinanceService = {
       .select('*')
       .eq('user_id', userId);
     if (error) throw error;
-    return data as any;
+    return (data || []) as Account[];
   },
 
   async createAccount(userId: string, acc: Partial<Account>) {

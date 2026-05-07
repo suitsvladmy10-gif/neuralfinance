@@ -1,8 +1,7 @@
 "use client";
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Loader2, Check } from 'lucide-react';
-import Tesseract from 'tesseract.js';
+import { X, Camera, Check } from 'lucide-react';
 import { useFinance } from '@/lib/store';
 
 interface DetectedTx {
@@ -42,8 +41,6 @@ export function MagicInputModal({ isOpen, onClose, onAdd }: MagicInputModalProps
   const [input, setInput] = useState('');
   const [type, setType] = useState<'Expense' | 'Income'>('Expense');
   const [detectedList, setDetectedList] = useState<DetectedTx[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const parseMultiContent = (text: string) => {
