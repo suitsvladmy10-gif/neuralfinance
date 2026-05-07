@@ -24,14 +24,8 @@ interface FormState {
 }
 
 const defaultForm: FormState = {
-  title: '',
-  amount: '',
-  dayOfMonth: '1',
-  category: 'Subscription',
-  icon: 'notifications',
-  type: 'subscription',
-  accountId: '',
-  isMandatory: true,
+  title: '', amount: '', dayOfMonth: '1', category: 'Subscription',
+  icon: 'notifications', type: 'subscription', accountId: '', isMandatory: true,
 };
 
 export default function RemindersPage() {
@@ -46,30 +40,18 @@ export default function RemindersPage() {
   const currentMonth = new Date().toISOString().substring(0, 7);
   const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
 
-  const getDaysDiff = (dayOfMonth: number) => {
-    if (dayOfMonth >= today) return dayOfMonth - today;
-    return (daysInMonth - today) + dayOfMonth;
-  };
+  const getDaysDiff = (dayOfMonth: number) =>
+    dayOfMonth >= today ? dayOfMonth - today : (daysInMonth - today) + dayOfMonth;
 
   const dueSoon = useMemo(() =>
-    reminders
-      .filter(r => {
-        if (!r.dayOfMonth || r.lastConfirmedDate === currentMonth) return false;
-        return getDaysDiff(r.dayOfMonth) <= 7;
-      })
+    reminders.filter(r => r.dayOfMonth && r.lastConfirmedDate !== currentMonth && getDaysDiff(r.dayOfMonth) <= 7)
       .sort((a, b) => getDaysDiff(a.dayOfMonth || 0) - getDaysDiff(b.dayOfMonth || 0))
   , [reminders, today, currentMonth, daysInMonth]);
 
-  const totalMonthly = useMemo(() =>
-    reminders.reduce((acc, curr) => acc + curr.amount, 0)
-  , [reminders]);
-
+  const totalMonthly = useMemo(() => reminders.reduce((acc, curr) => acc + curr.amount, 0), [reminders]);
   const paidThisMonth = useMemo(() =>
-    reminders
-      .filter(r => r.lastConfirmedDate === currentMonth)
-      .reduce((acc, curr) => acc + curr.amount, 0)
+    reminders.filter(r => r.lastConfirmedDate === currentMonth).reduce((acc, curr) => acc + curr.amount, 0)
   , [reminders, currentMonth]);
-
   const progress = totalMonthly > 0 ? (paidThisMonth / totalMonthly) * 100 : 0;
 
   const openAddModal = () => {
@@ -77,244 +59,189 @@ export default function RemindersPage() {
     setFormData({ ...defaultForm, accountId: accounts[0]?.id || '' });
     setIsModalOpen(true);
   };
-
   const openEditModal = (rem: Reminder) => {
     setEditingReminder(rem);
     setFormData({
-      title: rem.title,
-      amount: rem.amount.toString(),
-      dayOfMonth: rem.dayOfMonth?.toString() || '1',
-      category: rem.category,
-      icon: rem.icon || 'notifications',
-      type: rem.type,
-      accountId: rem.accountId || accounts[0]?.id || '',
-      isMandatory: rem.isMandatory,
+      title: rem.title, amount: rem.amount.toString(), dayOfMonth: rem.dayOfMonth?.toString() || '1',
+      category: rem.category, icon: rem.icon || 'notifications', type: rem.type,
+      accountId: rem.accountId || accounts[0]?.id || '', isMandatory: rem.isMandatory,
     });
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
     const data = {
-      title: formData.title,
-      amount: parseFloat(formData.amount) || 0,
-      dayOfMonth: parseInt(formData.dayOfMonth) || 1,
-      category: formData.category,
-      icon: formData.icon,
-      type: formData.type,
-      accountId: formData.accountId || accounts[0]?.id || '',
-      isMandatory: formData.isMandatory,
+      title: formData.title, amount: parseFloat(formData.amount) || 0,
+      dayOfMonth: parseInt(formData.dayOfMonth) || 1, category: formData.category,
+      icon: formData.icon, type: formData.type,
+      accountId: formData.accountId || accounts[0]?.id || '', isMandatory: formData.isMandatory,
     };
-    if (editingReminder) {
-      await updateReminder(editingReminder.id, data);
-    } else {
-      await addReminder(data);
-    }
+    if (editingReminder) await updateReminder(editingReminder.id, data);
+    else await addReminder(data);
     setIsModalOpen(false);
   };
 
   const handleDelete = async () => {
-    if (editingReminder) {
-      await deleteReminder(editingReminder.id);
-      setIsModalOpen(false);
-    }
+    if (editingReminder) { await deleteReminder(editingReminder.id); setIsModalOpen(false); }
   };
 
+  const INPUT_CLS = "w-full bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-4 text-white text-sm outline-none focus:border-[#2563EB] transition-all";
+
   return (
-    <div className="pb-32 pt-12 px-4 h-full overflow-y-auto bg-[#111318]">
-      <header className="flex flex-col gap-6 mb-8 px-2 mt-4">
-        <div className="flex justify-between items-center">
-          <button onClick={() => router.back()} className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#cbc3d7]">
-            <span className="material-symbols-outlined">arrow_back</span>
+    <div className="min-h-screen bg-[#0A0A0A] pb-28">
+      {/* Header */}
+      <header className="px-5 pt-6 pb-4">
+        <div className="flex justify-between items-center mb-5">
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-[#141414] border border-[#2A2A2A] flex items-center justify-center text-[#888888]">
+            <span className="material-symbols-outlined !text-lg">arrow_back</span>
           </button>
-          <h1 className="text-[#e2e2e9] font-extrabold text-lg uppercase tracking-tighter font-headline">Planning</h1>
-          <button onClick={openAddModal} className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#d0bcff]">
-            <span className="material-symbols-outlined">add</span>
+          <h1 className="text-white font-bold text-base">Planning</h1>
+          <button onClick={openAddModal} className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white">
+            <span className="material-symbols-outlined !text-lg">add</span>
           </button>
         </div>
 
-        <div className="glass-card rounded-3xl p-6 border-[#d0bcff]/10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#d0bcff]/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
-          <p className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] mb-1">Monthly Budget</p>
-          <div className="flex items-baseline gap-2 mb-4">
-            <h2 className="text-3xl font-extrabold text-white tracking-tighter">${totalMonthly.toLocaleString('en-US', { minimumFractionDigits: 0 })}</h2>
-            <span className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-widest">Allocated</span>
+        {/* Monthly summary card */}
+        <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl p-5">
+          <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1">Monthly Committed</p>
+          <p className="text-3xl font-bold text-white tabular-nums mb-4">${totalMonthly.toLocaleString()}</p>
+          <div className="h-1.5 w-full bg-[#2A2A2A] rounded-full overflow-hidden mb-2">
+            <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-[#2563EB] rounded-full" />
           </div>
-          <div className="space-y-3">
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                className="h-full bg-gradient-to-r from-[#d0bcff] to-[#4cd7f6]"
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-wider">Paid: ${paidThisMonth.toLocaleString()}</span>
-              <span className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-wider">{Math.round(progress)}% Complete</span>
-            </div>
+          <div className="flex justify-between">
+            <p className="text-[10px] text-[#888888]">Paid: ${paidThisMonth.toLocaleString()}</p>
+            <p className="text-[10px] text-[#2563EB] font-semibold">{Math.round(progress)}% done</p>
           </div>
         </div>
       </header>
 
-      <section className="space-y-6 px-2">
+      <div className="px-5 space-y-5">
+        {/* Due soon */}
         {dueSoon.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-bold text-[#ffb4ab] uppercase tracking-[0.2em] ml-2 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ffb4ab] animate-pulse"></span>
-              Attention Required
-            </h3>
-            <div className="space-y-3">
-              {dueSoon.map((rem) => (
-                <div key={rem.id} className="glass-card p-4 rounded-2xl border-[#ffb4ab]/20 flex justify-between items-center">
-                  <button onClick={() => openEditModal(rem)} className="flex items-center gap-4 flex-1 text-left">
-                    <div className="w-10 h-10 rounded-full bg-[#ffb4ab]/10 flex items-center justify-center text-[#ffb4ab]">
-                      <span className="material-symbols-outlined !text-xl">{rem.icon || 'priority_high'}</span>
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] animate-pulse" />
+              <p className="text-[10px] font-semibold text-[#DC2626] uppercase tracking-wider">Attention Required</p>
+            </div>
+            <div className="space-y-2">
+              {dueSoon.map(rem => (
+                <div key={rem.id} className="bg-[#141414] border border-[#DC2626]/20 rounded-2xl p-4 flex justify-between items-center">
+                  <button onClick={() => openEditModal(rem)} className="flex items-center gap-3 flex-1 text-left">
+                    <div className="w-9 h-9 rounded-xl bg-[#DC2626]/10 flex items-center justify-center text-[#DC2626]">
+                      <span className="material-symbols-outlined !text-base">{rem.icon || 'notifications'}</span>
                     </div>
                     <div>
-                      <h4 className="text-white font-bold text-sm truncate max-w-[120px]">{rem.title}</h4>
-                      <p className="text-[10px] font-bold text-[#ffb4ab] uppercase tracking-tighter">
-                        {getDaysDiff(rem.dayOfMonth!) === 0 ? 'Due today' : `Due in ${getDaysDiff(rem.dayOfMonth!)} days`}
+                      <p className="text-white font-semibold text-sm">{rem.title}</p>
+                      <p className="text-[#DC2626] text-[10px] font-semibold">
+                        {getDaysDiff(rem.dayOfMonth!) === 0 ? 'Due today' : `Due in ${getDaysDiff(rem.dayOfMonth!)}d`}
                       </p>
                     </div>
                   </button>
-                  <button
-                    onClick={() => confirmReminder(rem.id)}
-                    className="bg-[#ffb4ab] text-[#690005] text-[10px] font-bold px-4 py-2 rounded-xl uppercase tracking-wider active:scale-95 transition-transform"
-                  >
+                  <button onClick={() => confirmReminder(rem.id)} className="bg-[#DC2626] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg uppercase tracking-wide active:opacity-70">
                     Pay ${rem.amount.toLocaleString()}
                   </button>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        <div className="space-y-4">
-          <h3 className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-2">All Subscriptions</h3>
-          <div className="space-y-3">
-            {reminders.length === 0 ? (
-              <div className="py-20 text-center opacity-30">
-                <span className="material-symbols-outlined !text-6xl mb-4">notifications_off</span>
-                <p className="text-sm font-medium">No active reminders</p>
-              </div>
-            ) : (
-              reminders.map((rem) => (
-                <button
-                  key={rem.id}
-                  onClick={() => openEditModal(rem)}
-                  className={`w-full glass-card p-5 rounded-2xl border-white/5 flex justify-between items-center active:scale-[0.98] transition-all text-left group ${rem.lastConfirmedDate === currentMonth ? 'opacity-40' : ''}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full bg-[#1a1b21] border border-white/5 flex items-center justify-center shadow-inner ${rem.lastConfirmedDate === currentMonth ? 'text-[#cbc3d7]' : 'text-[#4cd7f6]'}`}>
-                      <span className="material-symbols-outlined !text-2xl">{rem.icon || 'description'}</span>
+        {/* All reminders */}
+        <section>
+          <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-3">All Subscriptions</p>
+          {reminders.length === 0 ? (
+            <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl p-10 text-center">
+              <span className="material-symbols-outlined !text-4xl text-[#888888] mb-2 block">notifications_off</span>
+              <p className="text-[#888888] text-sm">No reminders yet</p>
+              <button onClick={openAddModal} className="text-[#2563EB] text-xs font-semibold mt-2">Add one</button>
+            </div>
+          ) : (
+            <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl overflow-hidden">
+              {reminders.map((rem, idx) => (
+                <button key={rem.id} onClick={() => openEditModal(rem)}
+                  className={`w-full px-4 py-3.5 flex justify-between items-center active:bg-[#1E1E1E] transition-colors text-left ${rem.lastConfirmedDate === currentMonth ? 'opacity-40' : ''} ${idx < reminders.length - 1 ? 'border-b border-[#2A2A2A]' : ''}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${rem.lastConfirmedDate === currentMonth ? 'bg-[#1E1E1E] text-[#888888]' : 'bg-[#2563EB]/10 text-[#2563EB]'}`}>
+                      <span className="material-symbols-outlined !text-base">{rem.icon || 'description'}</span>
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-sm">{rem.title}</h3>
-                      <p className="text-[10px] font-bold text-[#cbc3d7] opacity-60 uppercase tracking-tighter">Day {rem.dayOfMonth} • Monthly</p>
+                      <p className="text-white font-semibold text-sm">{rem.title}</p>
+                      <p className="text-[#888888] text-[10px]">Day {rem.dayOfMonth} · Monthly</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-white font-extrabold text-base tracking-tight">${rem.amount.toLocaleString('en-US', { minimumFractionDigits: 0 })}</p>
+                    <p className="text-white font-bold tabular-nums text-sm">${rem.amount.toLocaleString()}</p>
                     {rem.lastConfirmedDate === currentMonth ? (
-                      <span className="material-symbols-outlined text-[#4cd7f6] !text-lg">check_circle</span>
+                      <span className="material-symbols-outlined text-[#16A34A] !text-sm">check_circle</span>
                     ) : (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); confirmReminder(rem.id); }}
-                        className="text-[#d0bcff] text-[10px] font-bold uppercase hover:underline"
-                      >
+                      <button onClick={e => { e.stopPropagation(); confirmReminder(rem.id); }} className="text-[#2563EB] text-[10px] font-semibold">
                         Confirm
                       </button>
                     )}
                   </div>
                 </button>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
-      <button
-        onClick={openAddModal}
-        className="fixed bottom-28 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-[#d0bcff] to-[#4cd7f6] shadow-[0_10px_30px_rgba(208,188,255,0.4)] flex items-center justify-center text-[#23005c] z-50 active:scale-90 transition-all hover:brightness-110"
-      >
-        <span className="material-symbols-outlined !text-[32px]">add</span>
+      {/* FAB */}
+      <button onClick={openAddModal} className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-[#2563EB] shadow-[0_4px_20px_rgba(37,99,235,0.4)] flex items-center justify-center text-white z-50 active:scale-90 transition-transform">
+        <span className="material-symbols-outlined !text-2xl">add</span>
       </button>
 
-      {/* Add / Edit Modal */}
+      {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-md"
+          <motion.div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setIsModalOpen(false)}
-          >
+            onClick={() => setIsModalOpen(false)}>
             <motion.div
-              className="w-full max-w-md glass-card rounded-t-[40px] p-8 shadow-2xl border-t-2 border-[#d0bcff]/20 max-h-[90vh] overflow-y-auto custom-scrollbar"
+              className="w-full max-w-md bg-[#141414] border border-[#2A2A2A] rounded-t-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-white font-headline font-extrabold text-xl uppercase tracking-tighter">
-                  {editingReminder ? 'Edit Reminder' : 'New Reminder'}
-                </h2>
-                <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#cbc3d7]">
-                  <span className="material-symbols-outlined">close</span>
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              onClick={e => e.stopPropagation()}>
+
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-white font-bold text-lg">{editingReminder ? 'Edit Reminder' : 'New Reminder'}</h2>
+                <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center text-[#888888]">
+                  <span className="material-symbols-outlined !text-base">close</span>
                 </button>
               </div>
 
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Title</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Netflix, Rent, Gym..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-[#d0bcff]/50 transition-all placeholder:text-white/20"
-                  />
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Title</p>
+                  <input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g. Netflix, Rent, Gym..." className={INPUT_CLS} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Amount ($)</label>
-                    <input
-                      type="number"
-                      value={formData.amount}
-                      onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                      placeholder="0"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xl font-extrabold text-white outline-none focus:border-[#d0bcff]/50 transition-all"
-                    />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Amount ($)</p>
+                    <input type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                      placeholder="0" className={INPUT_CLS + " text-xl font-bold tabular-nums"} />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Day of Month</label>
-                    <input
-                      type="number"
-                      min="1" max="31"
-                      value={formData.dayOfMonth}
-                      onChange={e => setFormData({ ...formData, dayOfMonth: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xl font-extrabold text-white outline-none focus:border-[#d0bcff]/50 transition-all"
-                    />
+                  <div>
+                    <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Day of Month</p>
+                    <input type="number" min="1" max="31" value={formData.dayOfMonth} onChange={e => setFormData({ ...formData, dayOfMonth: e.target.value })}
+                      className={INPUT_CLS + " text-xl font-bold tabular-nums"} />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Category</label>
-                    <select
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full bg-[#1a1b21] border border-white/10 rounded-2xl p-4 text-xs font-bold text-white outline-none"
-                    >
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Category</p>
+                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-3.5 text-white text-sm outline-none appearance-none">
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Type</label>
-                    <select
-                      value={formData.type}
-                      onChange={e => setFormData({ ...formData, type: e.target.value as FormState['type'] })}
-                      className="w-full bg-[#1a1b21] border border-white/10 rounded-2xl p-4 text-xs font-bold text-white outline-none"
-                    >
+                  <div>
+                    <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Type</p>
+                    <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as FormState['type'] })}
+                      className="w-full bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-3.5 text-white text-sm outline-none appearance-none">
                       <option value="subscription">Subscription</option>
                       <option value="bill">Bill</option>
                       <option value="one-time">One-time</option>
@@ -322,51 +249,37 @@ export default function RemindersPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Icon</label>
-                  <div className="grid grid-cols-8 gap-2">
+                <div>
+                  <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Icon</p>
+                  <div className="grid grid-cols-8 gap-1.5">
                     {ICONS.map(icon => (
-                      <button
-                        key={icon}
-                        onClick={() => setFormData({ ...formData, icon })}
-                        className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === icon ? 'bg-[#d0bcff]/20 border border-[#d0bcff]/50 text-[#d0bcff]' : 'bg-white/5 border border-white/5 text-[#cbc3d7]'}`}
-                      >
-                        <span className="material-symbols-outlined !text-base">{icon}</span>
+                      <button key={icon} onClick={() => setFormData({ ...formData, icon })}
+                        className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === icon ? 'bg-[#2563EB]/20 border border-[#2563EB]/50 text-[#2563EB]' : 'bg-[#1E1E1E] border border-[#2A2A2A] text-[#888888]'}`}>
+                        <span className="material-symbols-outlined !text-sm">{icon}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {accounts.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-1">Deduct from Account</label>
-                    <select
-                      value={formData.accountId}
-                      onChange={e => setFormData({ ...formData, accountId: e.target.value })}
-                      className="w-full bg-[#1a1b21] border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none"
-                    >
+                  <div>
+                    <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1.5">Deduct from Account</p>
+                    <select value={formData.accountId} onChange={e => setFormData({ ...formData, accountId: e.target.value })}
+                      className="w-full bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-3.5 text-white text-sm outline-none appearance-none">
                       <option value="">None</option>
-                      {accounts.map(acc => (
-                        <option key={acc.id} value={acc.id}>{acc.name} (${acc.balance.toLocaleString()})</option>
-                      ))}
+                      {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name} (${acc.balance.toLocaleString()})</option>)}
                     </select>
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-1">
                   {editingReminder && (
-                    <button
-                      onClick={handleDelete}
-                      className="flex-1 h-14 rounded-2xl bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20 font-bold uppercase text-[10px] tracking-widest active:scale-95 transition-all"
-                    >
+                    <button onClick={handleDelete} className="flex-1 py-4 rounded-xl bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/20 font-semibold text-sm active:opacity-70">
                       Delete
                     </button>
                   )}
-                  <button
-                    onClick={handleSave}
-                    disabled={!formData.title || !formData.amount}
-                    className="flex-[2] h-14 rounded-2xl bg-gradient-to-r from-[#d0bcff] to-[#4cd7f6] text-[#23005c] font-headline font-extrabold uppercase tracking-widest active:scale-95 transition-all shadow-lg disabled:opacity-30"
-                  >
+                  <button onClick={handleSave} disabled={!formData.title || !formData.amount}
+                    className="flex-[2] py-4 rounded-xl bg-[#2563EB] text-white font-bold text-sm active:opacity-80 disabled:opacity-30">
                     {editingReminder ? 'Save Changes' : 'Add Reminder'}
                   </button>
                 </div>

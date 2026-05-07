@@ -8,128 +8,111 @@ export default function AnalyticsPage() {
   const { transactions } = useFinance();
   const router = useRouter();
 
-  // Current month processing
   const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  
-  const stats = useMemo(() => {
-    let income = 0;
-    let expense = 0;
-    const categories: Record<string, number> = {};
 
+  const stats = useMemo(() => {
+    let income = 0, expense = 0;
+    const categories: Record<string, number> = {};
     transactions.forEach(tx => {
-      // Simple filter for current month for the summary
-      const txMonth = new Date(tx.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      if (txMonth === currentMonthName) {
+      if (new Date(tx.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) === currentMonthName) {
         if (tx.type === 'Income') income += tx.amount;
-        if (tx.type === 'Expense') {
-          expense += tx.amount;
-          categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
-        }
+        if (tx.type === 'Expense') { expense += tx.amount; categories[tx.category] = (categories[tx.category] || 0) + tx.amount; }
       }
     });
-
-    const sortedCategories = Object.entries(categories)
-      .map(([name, amount]) => ({ name, amount }))
-      .sort((a, b) => b.amount - a.amount);
-
-    return { income, expense, balance: income - expense, categories: sortedCategories };
+    return {
+      income, expense, balance: income - expense,
+      categories: Object.entries(categories).map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount),
+    };
   }, [transactions, currentMonthName]);
 
   return (
-    <div className="pb-32 px-4 h-full overflow-y-auto bg-[#111318]">
-      {/* Header Aligned with design */}
-      <header className="flex flex-col gap-6 mb-8 px-2 mt-4">
-        <div className="flex justify-between items-center">
-          <button onClick={() => router.back()} className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#cbc3d7]">
-            <span className="material-symbols-outlined">arrow_back</span>
+    <div className="min-h-screen bg-[#0A0A0A] pb-28">
+      <header className="px-5 pt-6 pb-4">
+        <div className="flex justify-between items-center mb-5">
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-[#141414] border border-[#2A2A2A] flex items-center justify-center text-[#888888]">
+            <span className="material-symbols-outlined !text-lg">arrow_back</span>
           </button>
-          <h1 className="text-[#e2e2e9] font-extrabold text-lg uppercase tracking-tighter font-headline">Monthly Analytics</h1>
-          <button className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#d0bcff]">
-            <span className="material-symbols-outlined">calendar_month</span>
-          </button>
+          <h1 className="text-white font-bold text-base">Analytics</h1>
+          <div className="w-9 h-9 rounded-xl bg-[#141414] border border-[#2A2A2A] flex items-center justify-center text-[#888888]">
+            <span className="material-symbols-outlined !text-lg">calendar_month</span>
+          </div>
         </div>
 
-        {/* Monthly Summary Card */}
-        <div className="glass-card rounded-3xl p-6 border-[#4cd7f6]/10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#4cd7f6]/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
-          <p className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] mb-1">{currentMonthName}</p>
-          <div className="flex justify-between items-end">
-            <div>
-              <h2 className="text-3xl font-extrabold text-white tracking-tighter">${stats.balance.toLocaleString('en-US', { minimumFractionDigits: 0 })}</h2>
-              <p className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-widest mt-1">Net Cash Flow</p>
+        {/* Summary card */}
+        <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl p-5">
+          <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-1">{currentMonthName}</p>
+          <p className={`text-3xl font-bold tabular-nums mb-4 ${stats.balance >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>
+            {stats.balance >= 0 ? '+' : '−'}${Math.abs(stats.balance).toLocaleString()}
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#1E1E1E] rounded-xl p-3">
+              <p className="text-[10px] text-[#888888] font-semibold uppercase mb-0.5">Income</p>
+              <p className="text-[#16A34A] font-bold tabular-nums">+${stats.income.toLocaleString()}</p>
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-[#4cd7f6]">
-                <span className="material-symbols-outlined !text-sm">trending_up</span>
-                <span className="text-xs font-bold">${stats.income.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[#ffb4ab]">
-                <span className="material-symbols-outlined !text-sm">trending_down</span>
-                <span className="text-xs font-bold">${stats.expense.toLocaleString()}</span>
-              </div>
+            <div className="bg-[#1E1E1E] rounded-xl p-3">
+              <p className="text-[10px] text-[#888888] font-semibold uppercase mb-0.5">Spent</p>
+              <p className="text-[#DC2626] font-bold tabular-nums">-${stats.expense.toLocaleString()}</p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Breakdown Section */}
-      <section className="space-y-6 px-2">
-        <div className="flex justify-between items-center ml-2">
-          <h3 className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em]">Expense Breakdown</h3>
-          <span className="text-[10px] font-bold text-[#4cd7f6] uppercase tracking-widest">Top Categories</span>
-        </div>
-
-        <div className="space-y-3">
-          {stats.categories.length === 0 ? (
-            <div className="py-20 text-center opacity-30">
-              <span className="material-symbols-outlined !text-6xl mb-4">analytics</span>
-              <p className="text-sm font-medium">No expenses recorded this month</p>
-            </div>
-          ) : (
-            stats.categories.map((cat, idx) => {
-              const percentage = (cat.amount / stats.expense) * 100;
+      {/* Breakdown */}
+      <section className="px-5">
+        <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-3">Expense Breakdown</p>
+        {stats.categories.length === 0 ? (
+          <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl p-10 text-center">
+            <span className="material-symbols-outlined !text-4xl text-[#888888] mb-2 block">analytics</span>
+            <p className="text-[#888888] text-sm">No expenses this month</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {stats.categories.map((cat, idx) => {
+              const pct = stats.expense > 0 ? (cat.amount / stats.expense) * 100 : 0;
               return (
-                <div key={cat.name} className="glass-card p-5 rounded-2xl border-white/5 space-y-3">
-                  <div className="flex justify-between items-center">
+                <div key={cat.name} className="bg-[#141414] border border-[#2A2A2A] rounded-2xl p-4">
+                  <div className="flex justify-between items-center mb-2.5">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${idx === 0 ? 'text-[#4cd7f6]' : 'text-[#cbc3d7]'}`}>
-                        <span className="material-symbols-outlined !text-xl">category</span>
+                      <div className="w-8 h-8 rounded-lg bg-[#1E1E1E] flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[#888888] !text-base">category</span>
                       </div>
                       <div>
-                        <h4 className="text-white font-bold text-sm">{cat.name}</h4>
-                        <p className="text-[10px] font-bold text-[#cbc3d7] opacity-50 uppercase tracking-tighter">{Math.round(percentage)}% of total</p>
+                        <p className="text-white font-semibold text-sm">{cat.name}</p>
+                        <p className="text-[#888888] text-[10px]">{Math.round(pct)}% of spending</p>
                       </div>
                     </div>
-                    <p className="text-white font-extrabold text-base tracking-tight">${cat.amount.toLocaleString()}</p>
+                    <p className="text-white font-bold tabular-nums text-sm">-${cat.amount.toLocaleString()}</p>
                   </div>
-                  
-                  {/* Progress bar for category */}
-                  <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                    <motion.div 
+                  <div className="h-1 w-full bg-[#2A2A2A] rounded-full overflow-hidden">
+                    <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${percentage}%` }}
-                      className={`h-full rounded-full ${idx === 0 ? 'bg-[#4cd7f6]' : 'bg-[#d0bcff]'}`}
+                      animate={{ width: `${pct}%` }}
+                      className={`h-full rounded-full ${idx === 0 ? 'bg-[#2563EB]' : 'bg-[#888888]'}`}
                     />
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </section>
 
-      {/* AI Insights Placeholder */}
-      <section className="mt-10 px-2">
-        <div className="glass-card p-6 rounded-3xl border-[#d0bcff]/20 bg-gradient-to-br from-[#d0bcff]/5 to-transparent relative overflow-hidden">
-           <div className="flex items-center gap-2 mb-3">
-             <span className="material-symbols-outlined text-[#d0bcff] !text-lg">auto_awesome</span>
-             <h3 className="text-[10px] font-bold text-[#d0bcff] uppercase tracking-[0.2em]">Neural Insight</h3>
-           </div>
-           <p className="text-xs text-[#cbc3d7] leading-relaxed font-medium">
-             Your spending on <span className="text-white font-bold">{stats.categories[0]?.name || 'categories'}</span> is 12% higher than last month. Consider setting a budget to stay on track with your goals.
-           </p>
+      {/* AI Insight */}
+      {stats.categories.length > 0 && (
+        <div className="px-5 mt-4">
+          <div className="bg-[#141414] border border-[#2563EB]/20 rounded-2xl p-4 flex gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
+              <span className="material-symbols-outlined text-[#2563EB] !text-base">auto_awesome</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold text-[#2563EB] uppercase mb-1">Neural Insight</p>
+              <p className="text-[#888888] text-xs leading-relaxed">
+                Your top expense is <span className="text-white font-semibold">{stats.categories[0]?.name}</span> at ${stats.categories[0]?.amount.toLocaleString()} this month.
+              </p>
+            </div>
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

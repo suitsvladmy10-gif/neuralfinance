@@ -20,54 +20,48 @@ export default function TransactionsPage() {
     return Object.entries(groups);
   }, [transactions]);
 
-  const openEdit = (tx: Transaction) => {
-    setEditingTx(tx);
-    setIsEditOpen(true);
-  };
+  const openEdit = (tx: Transaction) => { setEditingTx(tx); setIsEditOpen(true); };
 
   return (
-    <div className="pb-32 px-4 h-full overflow-y-auto bg-[#111318]">
-      <header className="flex flex-col gap-6 mb-8 px-2 mt-4">
+    <div className="min-h-screen bg-[#0A0A0A] pb-28">
+      <header className="px-5 pt-6 pb-4">
         <div className="flex justify-between items-center">
-          <button onClick={() => router.back()} className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-[#cbc3d7]">
-            <span className="material-symbols-outlined">arrow_back</span>
+          <button onClick={() => router.back()} className="w-9 h-9 rounded-xl bg-[#141414] border border-[#2A2A2A] flex items-center justify-center text-[#888888]">
+            <span className="material-symbols-outlined !text-lg">arrow_back</span>
           </button>
-          <h1 className="text-[#e2e2e9] font-extrabold text-lg uppercase tracking-tighter font-headline">Activity History</h1>
-          <div className="w-10 h-10" /> {/* Spacer */}
+          <h1 className="text-white font-bold text-base">Activity History</h1>
+          <div className="w-9 h-9" />
         </div>
       </header>
 
-      <div className="space-y-8 px-2">
+      <div className="px-5 space-y-6">
         {transactions.length === 0 ? (
-          <div className="py-20 text-center opacity-30">
-            <span className="material-symbols-outlined !text-6xl mb-4">history</span>
-            <p className="text-sm font-medium">No activity yet</p>
+          <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl p-12 text-center mt-4">
+            <span className="material-symbols-outlined !text-5xl text-[#888888] mb-3 block">history</span>
+            <p className="text-[#888888] text-sm font-medium">No activity yet</p>
           </div>
         ) : (
           groupedTransactions.map(([date, items]) => (
-            <div key={date} className="space-y-3">
-              <h3 className="text-[10px] font-bold text-[#cbc3d7] uppercase tracking-[0.2em] ml-2 opacity-50">{date}</h3>
-              <div className="glass-card rounded-2xl overflow-hidden divide-y divide-white/5 border border-white/5">
-                {items.map((tx) => (
-                  <button 
-                    key={tx.id} 
-                    onClick={() => openEdit(tx)}
-                    className="w-full p-5 flex justify-between items-center active:bg-white/5 transition-all text-left group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center border border-white/5 ${tx.type === 'Expense' ? 'bg-[#ffb4ab]/5 text-[#ffb4ab]' : 'bg-[#4cd7f6]/5 text-[#4cd7f6]'}`}>
-                        <span className="material-symbols-outlined !text-xl">{tx.type === 'Expense' ? 'payments' : 'add_card'}</span>
+            <div key={date}>
+              <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wider mb-2 ml-1">{date}</p>
+              <div className="bg-[#141414] border border-[#2A2A2A] rounded-2xl overflow-hidden">
+                {items.map((tx, idx) => (
+                  <button key={tx.id} onClick={() => openEdit(tx)}
+                    className={`w-full px-4 py-3.5 flex justify-between items-center active:bg-[#1E1E1E] transition-colors text-left ${idx < items.length - 1 ? 'border-b border-[#2A2A2A]' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${tx.type === 'Expense' ? 'bg-[#DC2626]/10' : 'bg-[#16A34A]/10'}`}>
+                        <span className={`material-symbols-outlined !text-base ${tx.type === 'Expense' ? 'text-[#DC2626]' : 'text-[#16A34A]'}`}>
+                          {tx.type === 'Expense' ? 'arrow_upward' : 'arrow_downward'}
+                        </span>
                       </div>
                       <div>
-                        <p className="text-white font-bold text-sm">{tx.title}</p>
-                        <p className="text-[10px] text-[#cbc3d7] uppercase font-bold tracking-tighter opacity-60">{tx.category} • {tx.time}</p>
+                        <p className="text-white font-semibold text-sm">{tx.title}</p>
+                        <p className="text-[#888888] text-[10px]">{tx.category} · {tx.time}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-extrabold text-base tracking-tight ${tx.type === 'Expense' ? 'text-[#ffb4ab]' : 'text-[#4cd7f6]'}`}>
-                        {tx.type === 'Expense' ? '-' : '+'}${tx.amount.toLocaleString()}
-                      </p>
-                    </div>
+                    <p className={`font-bold text-sm tabular-nums ${tx.type === 'Expense' ? 'text-[#DC2626]' : 'text-[#16A34A]'}`}>
+                      {tx.type === 'Expense' ? '−' : '+'}${tx.amount.toLocaleString()}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -76,11 +70,7 @@ export default function TransactionsPage() {
         )}
       </div>
 
-      <EditTransactionModal 
-        isOpen={isEditOpen} 
-        onClose={() => setIsEditOpen(false)} 
-        transaction={editingTx} 
-      />
+      <EditTransactionModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} transaction={editingTx} />
     </div>
   );
 }
